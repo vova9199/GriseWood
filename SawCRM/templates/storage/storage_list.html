@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% load static %}
+{% load humanize %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+{% if user.is_authenticated %}
+
+<h2>Тирса</h2>
+    <p>У розробці...</p>
+    <ul>
+    {% for item in sawdust %}
+        <li>{{ item.date }} {{ item.volume }} {{ item.customer }} {{ item.price }}  </li>
+    {% endfor %}
+</ul>
+
+    <h2>Щепа</h2>
+    <p>У розробці...</p>
+    <ul>
+    {% for item in graft %}
+        <li>{{ item.date }} {{ item.volume }} {{ item.customer }} {{ item.price }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+
+    <h2>Палети</h2>
+    <ul>
+    {% for item in pallets %}
+        <li>{{ item.date }} {{ item.size }} {{ item.quantity }} {{ item.block_quantity }} </li>
+    {% endfor %}
+</ul>
+
+{% endif %}
+
+{% endblock %}

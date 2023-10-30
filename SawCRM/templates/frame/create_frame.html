@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Додати раму</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success" type="submit">Зберегти</button>
+</form>
+<a class="btn btn-secondary" href="{% url 'frames_list' %}">Назад</a>
+
+    </ul>
+
+    <h2>Рами які вже є в базі:</h2>
+{#    <a href="{% url 'create_cutting_record' %}">Добавити сировину</a>#}
+    <ul>
+    {% for item in frames %}
+        <li>{{ item }} </li>
+        {% empty %}
+        <li> Немає записів про рами. </li>
+    {% endfor %}
+
+{% endblock %}

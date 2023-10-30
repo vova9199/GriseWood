@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+    <div>
+  <h2>Додавання записів про порізку сировини для рами ({{ frame.name }})</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-success" type="submit" name="submit_action" value="save_and_add_more">Save and Add More</button>
+      <button class="btn btn-outline-success" type="submit" name="submit_action" value="save_and_exit">Save and Exit</button>
+
+  </form>
+    <a class="btn btn-outline-secondary" href="{% url 'frames_list' %}">Назад</a>
+    </div>
+
+    <div>
+<h2>Збережені дані {{ frame.name }}: </h2>
+ <table>
+    <thead>
+        <tr>
+{#            <th rowspan="2">Замовлення</th>#}
+            <th rowspan="2">Дата порізки</th>
+            <th colspan="4">Сировина</th>
+            <th rowspan="2">Об'єм на виході, м³</th>
+            <th rowspan="2">Примітка</th>
+            <th rowspan="2"></th>
+        </tr>
+        <tr>
+            <th>L</th>
+            <th>D</th>
+            <th>V</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in frame.cuttingrecord_set.all %}
+        <tr>
+{#            <td>{{ record.order|default:'—' }}</td>#}
+            <td>{{ record.created|date:"d.m.Y" }}</td>
+            {% with raw_material=record.raw_material %}
+            <td>{{ raw_material.length|floatformat:'-2' }}</td>
+            <td>{{ raw_material.diameter|floatformat:'-2' }}</td>
+            <td>{{ raw_material.volume }}</td>
+            <td>{{ raw_material.wood_type }}</td>
+            {% endwith %}
+            <td>{{ record.volume }}</td>
+            <td>{{ record.note }}</td>
+            <td>
+                <a href="{% url 'edit_delete_cutting_record' frame_pk=frame.pk record_pk=record.pk %}">
+                    <i class="fas fa-pencil-alt"></i>
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9">Записи порізок відсутні</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+{% endblock %}

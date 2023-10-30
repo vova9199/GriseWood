@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+{#<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">#}
+
+<style>
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th[colspan="5"] {
+      border: none;
+    }
+  </style>
+
+  <div>
+    <h2>Додавання записів сировини</h2>
+
+      <h4>Деталі ТТН №<a href="{% url 'edit_delete_batch' pk=batch.pk %}">{{ batch.series }}:</a></h4>
+  <ul>
+    <li><strong>Вантажовідправник:</strong> {{ batch.sender }}</li>
+    <li><strong>Серія ЮІГ: </strong> №{{ batch.series }}</li>
+    <li><strong>Дата:</strong> {{ batch.delivery_day|date:"d.m.Y" }}</li>
+    <li><strong>Пункт завантаження:</strong> {{ batch.loading_point }}</li>
+    <li><strong>Загальна к-сть дерева:</strong> {{ batch.quantity }} шт. | <span style="{{ total_quantity_style }}">Додано в базу: {{ total_quantity }} шт.</span></li>
+    <li><strong>Об'єм:</strong> {{ batch.volume }} м³ | <span style="{{ total_volume_style }}">Об'єм по факту: {{ total_volume|default:'0'|floatformat:'-3' }} м³</span></li>
+    <li><strong>Загальна сума:</strong> {{ batch.total_amount }} грн</li>
+    <li><strong>Примітка:</strong> {{ batch.note }} </li>
+      {% if batch.receipt_photo %}
+      <li><strong>Фото:</strong> <a class="btn btn-outline-secondary"  href="{% url 'view_batch_photo' pk=batch.pk %}" >переглянути фото</a>
+        {% else %}
+          <li><strong>Фото:</strong> відсутнє!
+      {% endif %}
+ </li>
+
+
+  </ul>
+     <h2>Деталі вантажу №{{ batch.series }}:</h2>
+{#    <a href="{% url 'create_raw_material' pk=batch.id %}">Додати записи</a></a>#}
+  <table>
+    <thead>
+      <tr>
+        <th>L, м</th>
+        <th>D, см</th>
+        <th>V, м³</th>
+
+        <th>Тип</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for raw_material in raw_material_of_batch %}
+        <tr>
+          <td>{{ raw_material.length|floatformat:"-1" }}</td>
+          <td>{{ raw_material.diameter|floatformat:"-1" }}</td>
+          <td>{{ raw_material.volume }}</td>
+
+          <td>{{ raw_material.wood_type }}</td>
+          <td>
+              <a href="{% url 'edit_raw_material' pk=raw_material.id %}"><i class="fas fa-pencil-alt"></i></a> | <a href="{% url 'delete_raw_material' pk=raw_material.id %}"><i class="fas fa-times"></i></a>
+            </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">Немає пов'язаних записів з цією партією.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Форма для додавання записів деревини:</h4>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-success" type="submit" name="submit_action" value="save_and_add_more">Створити та додати ще</button>
+      <button class="btn btn-outline-success" type="submit" name="submit_action" value="save_and_exit">Створити та вийти</button>
+    </form>
+
+
+
+
+    <a class="btn btn-outline-secondary" href="{% url 'raw_material_batch_list' %}">Вернутись до таблиці</a>
+  </div>
+{% endblock %}

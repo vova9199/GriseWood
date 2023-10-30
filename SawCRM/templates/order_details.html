@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+
+<!-- order_details.html -->
+<h2>Order Details</h2>
+<p>Status: {{ order.get_status_display }}</p>
+<p>Created: {{ order.created|date }}</p>
+<p>Client: {{ order.client }}</p>
+<p>Note: {{ order.note }}</p>
+
+<h3>Cutting Records</h3>
+<table>
+    <thead>
+        <tr>
+            <th>...</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cutting_record in order.cuttingrecord_set.all %}
+        <tr>
+            <td>...</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>No cutting records found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Similar sections for SawDust, WoodChip, and Pallets -->
+{% endblock %}

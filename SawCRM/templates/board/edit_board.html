@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Редагування дошки</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-success"  type="submit">Зберегти</button>
+</form>
+<a class="btn btn-outline-secondary" href="{% url 'board_list' %}">Повернутися до списку дошок</a>
+{% endblock %}

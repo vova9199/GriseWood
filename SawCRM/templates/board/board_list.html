@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+<h2>Список дошок</h2>
+    <a class="btn btn-outline-success"  href="{% url 'create_board' %}">Додати дошки</a>
+
+<p class="mt-4">Пошук по параметрам:</p>
+<!-- Search Bars in One Row -->
+<div class="mb-4">
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label for="LengthSearchInput">Довжина</label>
+            <input class="form-control" id="LengthSearchInput" type="text" placeholder="Search by Length...">
+        </div>
+        <div class="form-group col-md-3">
+            <label for="WidthSearchInput">Ширина</label>
+            <input class="form-control" id="WidthSearchInput" type="text" placeholder="Search by Width...">
+        </div>
+        <div class="form-group col-md-3">
+            <label for="HeightSearchInput">Висота</label>
+            <input class="form-control" id="HeightSearchInput" type="text" placeholder="Search by Height...">
+        </div>
+        <div class="form-group col-md-3">
+            <label for="WoodtypeSearchInput">Матеріал</label>
+            <input class="form-control" id="WoodtypeSearchInput" type="text" placeholder="Search by Woodtype...">
+        </div>
+    </div>
+</div>
+
+
+
+    <table>
+    <thead>
+        <tr>
+            <th>Довжина (м)</th>
+            <th>Ширина (мм)</th>
+            <th>Висота (мм)</th>
+            <th>Кількість</th>
+            <th>Об'єм (м3)</th>
+            <th>Матеріал</th>
+            <th colspan="6"></th>
+        </tr>
+    </thead>
+    <tbody id="BoardTable">
+        {% for board in boards %}
+            <tr class="board-row">
+                <td class="length">{{ board.length|floatformat:'-2' }}</td>
+                <td class="width">{{ board.width }}</td>
+                <td class="height">{{ board.height }}</td>
+                <td>{{ board.quantity }}</td>
+                <td>{{ board.volume|floatformat:'-2' }}</td>
+                <td class="woodtype">{{ board.wood_type }}</td>
+                <td>
+                    <a class="btn btn-outline-info"  href="{% url 'edit_board' board.id %}">Редагувати</a>
+                </td>
+                <td>
+                    <a class="btn btn-outline-danger"  href="{% url 'delete_board' board.id %}">Видалити</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">Наразі немає жодної дошки.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- jQuery Script for Search Functionality -->
+<script>
+    $(document).ready(function() {
+        $("#LengthSearchInput, #WidthSearchInput, #HeightSearchInput, #WoodtypeSearchInput").on("input", function() {
+            var lengthValue = $("#LengthSearchInput").val().toLowerCase();
+            var widthValue = $("#WidthSearchInput").val().toLowerCase();
+            var heightValue = $("#HeightSearchInput").val().toLowerCase();
+            var woodtypeValue = $("#WoodtypeSearchInput").val().toLowerCase();
+
+            $("#BoardTable tr").filter(function() {
+                var row = $(this);
+                var length = row.find(".length").text().toLowerCase();
+                var width = row.find(".width").text().toLowerCase();
+                var height = row.find(".height").text().toLowerCase();
+                var woodtype = row.find(".woodtype").text().toLowerCase();
+
+                var lengthMatch = length.includes(lengthValue);
+                var widthMatch = width.includes(widthValue);
+                var heightMatch = height.includes(heightValue);
+                var woodtypeMatch = woodtype.includes(woodtypeValue);
+
+                row.toggle(lengthMatch && widthMatch && heightMatch && woodtypeMatch);
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+{% if user.is_authenticated %}
+
+    <p class="mt-4">Пошук: </p>
+
+<!-- Search Bar -->
+<div class="mb-4">
+    <input class="form-control" id="SearchInput" type="text" placeholder="Найти...">
+</div>
+
+<div>
+  <h2>ТТН:</h2>
+{#  <div>#}
+{#    <button id="sort-created" onclick="sortTable('created')">Сортувати за датою створення</button>#}
+{#    <button id="sort-delivery-date" onclick="sortTable('delivery_date')">Сортувати за датою доставки</button>#}
+{#    <button id="sort-series" onclick="sortTable('series')">Сортувати за серією ЮІГ</button>#}
+{#  </div>#}
+  {% if batches %}
+    <table id="ttn-table">
+      <!-- The table header -->
+      <thead>
+        <tr>
+          <th>Серія ЮІГ,<br> №</th>
+          <th>Дата,<br> дд/мм/yyyy</th>
+          <th>Вантажовідправник</th>
+          <th>Пункт завантаження</th>
+          <th>К-сть в партії,<br> шт.</th>
+          <th>Об'єм,<br> м³</th>
+          <th>Загальна вартість,<br> грн</th>
+        </tr>
+      </thead>
+      <tbody id="RawMaterialBatchTable">
+        {% for batch in batches %}
+          <tr>
+            <td>{{ batch.series }}</td>
+            <td>{{ batch.delivery_date|date:"d.m.Y" }}</td>
+            <td>{{ batch.sender }}</td>
+            <td>{{ batch.loading_point }}</td>
+            <td>{{ batch.quantity}} шт.</td>
+            <td>{{ batch.volume|floatformat }}</td>
+            <td>{{ batch.total_amount|floatformat }} грн</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">Записи ТТН відсутні</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+
+      <!-- The table footer -->
+      <tfoot>
+        <tr>
+          <th colspan="1">Загальна к-сть ТТН: <strong><br>{{ total_batches }} шт.</strong></th>
+          <th colspan="3"><strong></strong></th>
+          <th>Загальна к-сть дерева по ТТН:<strong><br>{{ total_batches_quantity|default:"0" }} шт.</strong></th> <!-- Total quantity for all TTNs -->
+          <th>Загальний об'єм по ТТН:<strong><br>{{ total_batches_volume|default:"0"|floatformat }} м³</strong></th> <!-- Total volume for all TTNs -->
+          <th>Загальна сума по ТТН:<strong><br>{{ total_batches_total_amount|default:"0"|floatformat }} грн</strong></th> <!-- Total amount for all TTNs -->
+        </tr>
+      </tfoot>
+    </table>
+  {% else %}
+    <h1>Записи ТТН відсутні</h1>
+  {% endif %}
+</div>
+
+{#<script>#}
+{#  function sortTable(sortBy) {#}
+{#    let table, rows, switching, i, x, y, shouldSwitch;#}
+{#    table = document.getElementById("ttn-table");#}
+{#    switching = true;#}
+{#    /* Make a loop that will continue until#}
+{#    no switching has been done: */#}
+{#    while (switching) {#}
+{#      // Start by saying: no switching is done:#}
+{#      switching = false;#}
+{#      rows = table.rows;#}
+{#      /* Loop through all table rows (except the#}
+{#      first, which contains table headers): */#}
+{#      for (i = 1; i < (rows.length - 1); i++) {#}
+{#        // Start by saying there should be no switching:#}
+{#        shouldSwitch = false;#}
+{#        /* Get the two elements you want to compare,#}
+{#        one from current row and one from the next: */#}
+{#        x = rows[i].getElementsByTagName("TD")[sortBy].innerHTML;#}
+{#        y = rows[i + 1].getElementsByTagName("TD")[sortBy].innerHTML;#}
+{#        // Check if the two rows should switch place:#}
+{#        if (sortBy === 1) {#}
+{#          // For date sorting, convert the dates to Date objects#}
+{#          x = new Date(x);#}
+{#          y = new Date(y);#}
+{#        }#}
+{#        if (x.toLowerCase() > y.toLowerCase()) {#}
+{#          // If so, mark as a switch and break the loop:#}
+{#          shouldSwitch = true;#}
+{#          break;#}
+{#        }#}
+{#      }#}
+{#      if (shouldSwitch) {#}
+{#        /* If a switch has been marked, make the switch#}
+{#        and mark that a switch has been done: */#}
+{#        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);#}
+{#        switching = true;#}
+{#      }#}
+{#    }#}
+{#  }#}
+{#</script>#}
+{% else %}
+  <h1>Доступ до даних закритий! <a href='{% url 'home' %}'>Авторизуватись</a></h1>
+{% endif %}
+
+        <!-- jQuery Script for Search Functionality -->
+<script>
+    $(document).ready(function() {
+        $("#SearchInput").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#RawMaterialBatchTable tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

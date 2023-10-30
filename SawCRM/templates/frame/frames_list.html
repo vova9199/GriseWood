@@ -1,0 +1,63 @@
+
+{% extends 'base.html' %}
+{% block content %}
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+<h2>Список рам</h2>
+<a class="btn btn-success" href="{% url 'create_frame' %}">Додати раму</a>
+{% for frame in frames %}
+  <h3>{{ frame }}</h3>
+    <p><a class="btn btn-secondary" href="{% url 'create_cutting_record' frame_pk=frame.pk %}">Додати порізку дерева</a>
+</p>
+
+<table>
+    <thead>
+        <tr>
+{#            <th rowspan="2">Замовлення</th>#}
+            <th rowspan="2">Дата порізки</th>
+            <th colspan="4">Сировина</th>
+            <th rowspan="2">Об'єм на виході, м³</th>
+            <th rowspan="2">Примітка</th>
+            <th rowspan="2"></th>
+        </tr>
+        <tr>
+            <th>L</th>
+            <th>D</th>
+            <th>V</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in frame.cuttingrecord_set.all %}
+        <tr>
+{#            <td>{{ record.order|default:'—' }}</td>#}
+            <td>{{ record.created|date:"d.m.Y" }}</td>
+            {% with raw_material=record.raw_material %}
+            <td>{{ raw_material.length|floatformat:'-2' }}</td>
+            <td>{{ raw_material.diameter|floatformat:'-2' }}</td>
+            <td>{{ raw_material.volume }}</td>
+            <td>{{ raw_material.wood_type }}</td>
+            {% endwith %}
+            <td>{{ record.volume }}</td>
+            <td>{{ record.note }}</td>
+            <td>
+                <a href="{% url 'edit_delete_cutting_record' frame_pk=frame.pk record_pk=record.pk %}">
+                    <i class="fas fa-pencil-alt"></i>
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9">Записи порізок відсутні</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+{% endfor %}
+
+{% endblock %}

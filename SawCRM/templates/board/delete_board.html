@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Видалення записів</h2>
+  <p>Ви впевнені що хочете видалити ці дані:  "{{ board }}"?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+    <a href="{% url 'board_list' %}">Відмінити</a>
+  </form>
+{% endblock %}

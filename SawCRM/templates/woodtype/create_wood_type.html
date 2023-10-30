@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Create Wood Type</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-success" type="submit">Save</button>
+  </form>
+
+    </ul>
+    <a class="btn btn-secondary" href="{% url 'frames_list' %}">Назад</a>
+
+    <h2>Типи дерева які вже є в базі:</h2>
+{#    <a href="{% url 'create_cutting_record' %}">Добавити сировину</a>#}
+    <ul>
+    {% for item in wood_types %}
+        <li>{{ item.name }} </li>
+    {% endfor %}
+
+{% endblock %}

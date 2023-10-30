@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Редагування клієнта</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <label for="first_name">Ім'я:</label>
+        <input type="text" id="first_name" name="first_name" value="{{ client.first_name }}"><br>
+        
+        <label for="last_name">Прізвище:</label>
+        <input type="text" id="last_name" name="last_name" value="{{ client.last_name }}"><br>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="{{ client.email }}"><br>
+        
+        <label for="phone">Телефон:</label>
+        <input type="text" id="phone" name="phone" value="{{ client.phone }}"><br>
+        
+        <!-- Додайте інші необхідні поля для редагування клієнта -->
+        
+        <button type="submit">Зберегти</button>
+    </form>
+{% endblock %}

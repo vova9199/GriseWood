@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+<!-- Replace 'base.html' with your base template -->
+
+{% block content %}
+
+
+{#      <style>#}
+{#    table {#}
+{#      border-collapse: collapse;#}
+{#    }#}
+{##}
+{#    th, td {#}
+{#      border: 1px solid black;#}
+{#      padding: 8px;#}
+{#      text-align: center;#}
+{#    }#}
+{##}
+{#    th[colspan="5"] {#}
+{#      border: none;#}
+{#    }#}
+{#  </style>#}
+<div>
+  <h2>Деталі ТТН №{{ object.series }}:</h2>
+  <ul>
+    <li><strong>Вантажовідправник:</strong> {{ object.sender }}</li>
+    <li><strong>Серія ЮІГ: </strong> №{{ object.series }}</li>
+    <li><strong>Дата:</strong> {{ object.delivery_date|date:"d.m.Y" }}</li>
+    <li><strong>Пункт завантаження:</strong> {{ object.loading_point }}</li>
+    <li><strong>Загальна к-сть дерева:</strong> {{ object.quantity }} шт. | <span style="{{ total_quantity_style }}">Додано {{ total_quantity }} шт.</span></li>
+    <li><strong>Об'єм:</strong> {{ object.volume }} м³ | <span style="{{ total_volume_style }}">Об'єм по факту: {{ total_vol|floatformat:'-3' }} м³</span></li>
+    <li><strong>Загальна сума:</strong> {{ object.total_amount }} грн</li>
+    <li><strong>Примітка:</strong> {{ object.note|default:'-' }}</li>
+      {% if object.receipt_photo %}
+      <li><strong>Фото:</strong>
+          <img src="{{ batch.receipt_photo.url }}" alt="Фото квитанції" width="200">
+            <button class="btn btn-outline-info" id="viewPhotoButton">Переглянути фото</button>
+        {% else %}
+          <li><strong>Фото:</strong> відсутнє!
+      {% endif %}
+  </ul>
+</div>
+    <div>
+  <h2>Редагувати ТТН</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ update_form.as_p }}
+
+    <button class="btn btn-success" type="submit" name="action" value="update">Зберегти</button>
+  </form>
+    </div>
+
+<div>
+  <h2>Деталі вантажу №{{ object.series }}:</h2>
+    <!-- Відображення total_quantity та total_vol з відповідними стилями -->
+    <p><strong>Загальна к-сть дерева:</strong> {{ object.quantity }} шт. | <span style="{{ total_quantity_style }}">Додано {{ total_quantity }} шт.</span></p>
+    <p><strong>Об'єм:</strong> {{ object.volume }} м³ | <span style="{{ total_volume_style }}">Об'єм по факту: {{ total_vol|floatformat:'-3' }} м³</span></p>
+    <a href="{% url 'create_raw_material' pk=object.pk %}">Додати записи</a></a>
+  <table>
+    <thead>
+      <tr>
+        <th>L, м</th>
+        <th>D, см</th>
+        <th>V, м³</th>
+{#        <th>Стан</th>#}
+        <th>Тип</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for raw_material in object.rawmaterial_set.all %}
+        <tr>
+          <td>{{ raw_material.length }}</td>
+          <td>{{ raw_material.diameter }}</td>
+          <td>{{ raw_material.volume }}</td>
+{#          <td>{{ raw_material.is_cut }} шт.</td>#}
+          <td>{{ raw_material.wood_type }}</td>
+          <td>
+              <a class="btn btn-info" href="{% url 'edit_raw_material' pk=raw_material.id %}">Редагувати</a> | <a class="btn btn-danger" href="{% url 'delete_raw_material' pk=raw_material.id %}">Видалити</a>
+            </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">Немає пов'язаних записів з цією партією.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Підтвердження видалення</h2>
+  <form method="post" action="{% url 'delete_raw_material_batch' object.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="confirm_delete">
+    <p>Ви впевнені що хочете видалити цю накладну та всі деталі вантажу з бази?</p>
+    <button class="btn btn-danger" type="submit">Підтвердити видалення</button>
+  </form>
+</div>
+
+    <script>
+$(document).ready(function() {
+    $('#viewPhotoButton').click(function() {
+        var imageUrl = "{{ batch.receipt_photo.url }}";
+        var popupContent = '<img src="' + imageUrl + '" alt="Фото квитанції">';
+
+        // Створення "pop-up" вікна
+        $.fancybox.open({
+            content: popupContent,
+            type: 'html'
+        });
+    });
+});
+</script>
+
+{% endblock %}

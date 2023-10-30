@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+ <h1>Редагування запису про порізку</h1>
+<h3>Рама №{{ frame.pk }}</h3>
+
+<!-- Add or edit cutting record form -->
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" name="edit" value="Зберегти">
+    <input type="submit" name="delete" value="Видалити">
+</form>
+
+{% endblock %}

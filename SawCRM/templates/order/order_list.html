@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load humanize %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+
+
+<h2>Order List</h2>
+<a class="btn btn-success" href="{% url 'create_order' %}">Створити нове замовлення</a>
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.client }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>{{ order.created|date:"d.m.Y" }}</td>
+            <td>
+                <a href="{% url 'order_details' pk=order.pk %}">Details</a> |
+                <a href="{% url 'edit_delete_order' pk=order.pk %}">Edit</a> |
+                <a href="{% url 'delete_order' pk=order.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

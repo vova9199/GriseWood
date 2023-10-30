@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div>
+    <h2>Create Raw Material Batch</h2>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-success" type="submit" name="submit_action" value="add_batch">Створити партію</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="{% url 'raw_material_batch_list' %}">Back</a>
+  </div>
+  {% if existing_batch %}
+    <p>Партія з серією ЮІГ №{{ existing_batch.series }} вже існує! Ось детальна інформація про цю партію:</p>
+    <ul>
+      <li>Вантажовідправник: {{ existing_batch.sender }}</li>
+      <li>Дата: {{ existing_batch.date }}</li>
+      <li>Пункт завантаження: {{ existing_batch.loading_point }}</li>
+      <li>Кількість дерева: {{ existing_batch.quantity }} шт.</li>
+      <li>Об'єм по ТТН: {{ existing_batch.volume }} м³</li>
+        <li><strong>Об'єм по факту:</strong> {{ total_volume|floatformat:"-3"}} м³</li>
+      <li>Загальна сума: {{ existing_batch.total_amount }} грн</li>
+    </ul>
+    <a href="{% url 'create_raw_material' pk=existing_batch.pk %}">Add without Batch</a>
+  {% endif %}
+{% endblock %}

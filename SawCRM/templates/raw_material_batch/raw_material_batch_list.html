@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% load static %}
+{% load humanize %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
+{% if user.is_authenticated %}
+
+    <h1>Склад</h1>
+    <a class="btn btn-success" href='{% url 'create_raw_material_batch' %}'>Додати нову партію</a>
+    <a class="btn btn-success" href='{% url 'create_wood_type' %}'>Додати тип дерева</a>
+
+{#{% if batches %}#}
+{#  <table>#}
+{# <thead>#}
+{#      <tr>#}
+{#        <th>Серія ЮІГ</th>#}
+{#        <th>Дата</th>#}
+{#        <th>Вантажовідправник</th>#}
+{#        <th>Пункт завантаження</th>#}
+{#        <th>К-сть в партії</th>#}
+{#        <th>Об'єм</th>#}
+{#        <th>Загальна вартість</th>#}
+{#        <th>Примітка</th>#}
+{#        <th>L, м</th>#}
+{#        <th>D, см</th>#}
+{#        <th>V, м³</th>#}
+{#        <th>Q, шт.</th>#}
+{#        <th>Тип</th>#}
+{#      </tr>#}
+{#    </thead>#}
+{#    <tbody>#}
+{#      {% for batch in batches|dictsort:"delivery_date" %}#}
+{#        {% for raw_material in batch.rawmaterial_set.all %}#}
+{#          <tr>#}
+{#            {% if forloop.first %}#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}"><a href="{% url 'edit_delete_batch' pk=batch.pk %}">{{ batch.series }}</a></td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.delivery_date|date:"d.m.Y" }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.sender }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.loading_point }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.quantity }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.volume|floatformat:".1f" }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.total_amount|floatformat }}</td>#}
+{#              <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.note|default:"—" }}</td>#}
+{#            {% endif %}#}
+{#            <td>{{ raw_material.length|floatformat:'-1' }}</td>#}
+{#            <td>{{ raw_material.diameter|floatformat:'-1' }}</td>#}
+{#            <td>{{ raw_material.volume }}</td>#}
+{#            <td>{{ raw_material.quantity }}</td>#}
+{#            <td>{{ raw_material.wood_type }}</td>#}
+{#            <td>#}
+{#              <a href="{% url 'edit_raw_material' pk=raw_material.id %}"><i class="fas fa-pencil-alt"></i></a>#}
+{#              <a href="{% url 'delete_raw_material' pk=raw_material.id %}"><i class="fas fa-times"></i></a>#}
+{#            </td>#}
+{#          </tr>#}
+{#        {% endfor %}#}
+{#        {% if not batch.rawmaterial_set.all %}#}
+{#          <tr>#}
+{#            <td><a href="{% url 'edit_delete_batch' pk=batch.pk %}">{{ batch.series }}</a></td>#}
+{#            <td>{{ batch.delivery_date|date:"d.m.Y" }}</td>#}
+{#            <td>{{ batch.sender }}</td>#}
+{#            <td>{{ batch.loading_point }}</td>#}
+{#            <td>{{ batch.quantity }}</td>#}
+{#            <td>{{ batch.volume|stringformat:".1f" }}</td>#}
+{#            <td>{{ batch.total_amount|floatformat }}</td>#}
+{#            <td>{{ batch.note|default:"—" }}</td>#}
+{#            <td></td>#}
+{#            <td></td>#}
+{#            <td></td>#}
+{#            <td></td>#}
+{#            <td>&nbsp;</td>#}
+{#          </tr>#}
+{#        {% endif %}#}
+{#      {% endfor %}#}
+{#    </tbody>#}
+{##}
+{##}
+{#  <!-- The table footer -->#}
+{#  <tfoot>#}
+{#    <tr>#}
+{#        <th></th>#}
+{#      <th colspan="1"><strong>Загальна к-сть ТТН: {{ total_batches }} шт.</strong></th>#}
+{#      <th colspan="4"></th>#}
+{#      <th><strong>Загальний об'єм по ТТН:<br> {{ total_batches_volume }} м³</strong></th> <!-- Total volume for all TTNs -->#}
+{#      <th><strong>Загальна сума по ТТН:<br>{{ total_batches_total_amount }} грн</strong></th> <!-- Remove the decimal places specification -->#}
+{#      <th></th>#}
+{#      <th></th>#}
+{##}
+{#      <th><strong>Фактична кубатура: <br>{{ total_raw_material_volume }} м³</strong></th> <!-- Total volume for all raw materials -->#}
+{#      <th><strong>Фактична к-сть: <br>{{ total_raw_material_quantity }} шт.</strong></th> <!-- Total quantity for all raw materials -->#}
+{#      <th colspan="2"></th> <!-- Empty cells for "L, м", "D, см", and "Тип" columns -->#}
+{#    </tr>#}
+{#  </tfoot>#}
+{##}
+{#  </table>#}
+{#{% else %}#}
+{#  <p>Записи відсутні. <a href="{% url 'create_raw_material_batch' %}">Додати перший запис</a></p>#}
+{#{% endif %}#}
+<!-- Instructions -->
+<p class="mt-4">Пошук: </p>
+
+<!-- Search Bar -->
+<div class="mb-4">
+    <input class="form-control" id="SearchInput" type="text" placeholder="Найти...">
+</div>
+
+
+    <h2>Прихід сировини:</h2>
+
+    <label>
+    <input type="checkbox" id="show-details-checkbox"> Приховати деталі вантажу
+</label>
+
+{% if batches %}
+<table>
+    <thead>
+        <tr>
+            <th>Серія ЮІГ</th>
+            <th>Дата</th>
+            <th>Вантажовідправник</th>
+            <th>Пункт завантаження</th>
+            <th>К-сть в партії</th>
+            <th>Об'єм, м³</th>
+            <th>Фактичний об'єм, м³</th> <!-- Доданий стовпчик -->
+            <th>Загальна вартість</th>
+            <th>Примітка</th>
+            <th class="additional-details-row">L, м</th>
+            <th class="additional-details-row">D, см</th>
+            <th class="additional-details-row">V, м³</th>
+            <th class="additional-details-row">Q, шт.</th>
+            <th class="additional-details-row">Тип</th>
+        </tr>
+    </thead>
+    <tbody id="RawMaterialBatchTable">
+        {% for batch in batches|dictsort:"delivery_date" %}
+            {% for raw_material in batch.rawmaterial_set.all %}
+                <tr>
+                    {% if forloop.first %}
+                        <td rowspan="{{ batch.rawmaterial_set.count }}"><a href="{% url 'edit_delete_batch' pk=batch.pk %}">{{ batch.series }}</a></td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.delivery_date|date:"d.m.Y" }}</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.sender }}</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.loading_point }}</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.quantity }} шт.</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.volume|floatformat:".1f" }} м³</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.get_total_volume|floatformat:"-3" }} м³</td> <!-- Виклик методу для обчислення фактичного об'єму -->
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.total_amount|floatformat }} грн</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.note|default:"—" }}</td>
+                    {% endif %}
+                    <td class="additional-details-row">{{ raw_material.length|floatformat:'-1' }}</td>
+                    <td class="additional-details-row">{{ raw_material.diameter|floatformat:'-1' }}</td>
+                    <td class="additional-details-row">{{ raw_material.volume }}</td>
+                    <td class="additional-details-row">{{ raw_material.quantity }}</td>
+                    <td class="additional-details-row">{{ raw_material.wood_type }}</td>
+                    <td class="additional-details-row">
+                        <a class="btn btn-info" href="{% url 'edit_raw_material' pk=raw_material.id %}">Редагувати</a>
+                        <a class="btn btn-danger" href="{% url 'delete_raw_material' pk=raw_material.id %}">Видалити</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            {% if not batch.rawmaterial_set.all %}
+                <tr>
+                    <td><a href="{% url 'edit_delete_batch' pk=batch.pk %}">{{ batch.series }}</a></td>
+                    <td>{{ batch.delivery_date|date:"d.m.Y" }}</td>
+                    <td>{{ batch.sender }}</td>
+                    <td>{{ batch.loading_point }}</td>
+                    <td>{{ batch.quantity }}</td>
+                    <td>{{ batch.volume|stringformat:".1f" }}</td>
+                    <td>{{ batch.get_total_volume }}</td> <!-- Виклик методу для обчислення фактичного об'єму -->
+                    <td>{{ batch.total_amount|floatformat }}</td>
+                    <td>{{ batch.note|default:"—" }}</td>
+                    <td class="additional-details-row"></td>
+                    <td class="additional-details-row"></td>
+                    <td class="additional-details-row"></td>
+                    <td class="additional-details-row"></td>
+                    <td class="additional-details-row">&nbsp;</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+    <!-- The table footer -->
+    <tfoot>
+        <tr>
+            <th></th>
+            <th colspan="1"><strong>Загальна к-сть ТТН: {{ total_batches }} шт.</strong></th>
+            <th colspan="3"></th>
+            <th><strong>Об'єм по накладній:<br> {{ total_batches_volume }} м³</strong></th>
+            <th><strong>Об'єм по факту:<br> {{ total_batches_volume }} м³</strong></th>
+            <th><strong>Загальна сума по ТТН:<br>{{ total_batches_total_amount }} грн</strong></th>
+            <th ></th>
+            <th class="additional-details-row"></th>
+            <th class="additional-details-row"><strong>Фактична кубатура: <br>{{ total_raw_material_volume }} м³</strong></th>
+            <th class="additional-details-row"><strong>Фактична к-сть: <br>{{ total_raw_material_quantity }} шт.</strong></th>
+            <th class="additional-details-row" colspan="2"></th>
+        </tr>
+    </tfoot>
+</table>
+{% else %}
+  <p>Записи відсутні. <a class="btn-outline-success" href="{% url 'create_raw_material_batch' %}">Додати перший запис</a></p>
+{% endif %}
+
+
+
+
+
+
+{#    <h2>Готова продукція</h2>#}
+{#    <a href="{% url 'create_cutting_record' %}">Добавити порізку дерев</a>#}
+{#    <ul>#}
+{#    {% for item in cutting_records %}#}
+{#        <li>{{ item.date }} {{ item.quantity }} {{ item.customer }} {{ item.price }}  </li>#}
+{#        <a href="cutting_record/edit/{{cutting_records.id}}">Змінити</a> | <a href="cutting_record/delete/{{cutting_records.id}}">Видалити</a>#}
+{#    {% endfor %}#}
+{#</ul>#}
+
+
+
+
+    <!-- jQuery Script for Search Functionality -->
+<script>
+    $(document).ready(function() {
+        $("#SearchInput").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#RawMaterialBatchTable tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+
+    <script>
+$(document).ready(function() {
+    $('#show-details-checkbox').change(function() {
+        if (this.checked) {
+            $('.additional-details-row').hide(); // Приховати рядки з додатковими даними
+        } else {
+            $('.additional-details-row').show(); // Показати рядки з додатковими даними
+        }
+    });
+});
+</script>
+
+    {% else %}
+    <h1>Немає прав доступу!</h1>
+    {% endif %}
+{% endblock %}
+

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <main>
+    <h1>Робочий простір Менеджера!</h1>
+
+    <nav>
+            <ul>
+                <li><a href="/">Головна</a></li>
+                <li><a href="/about/"></a></li>
+                <li><a href="/contact/">Контакти</a></li>
+            </ul>
+        </nav>
+        <nav>
+            <ul>
+                <li><a href="./engineer">Інженер складу</a></li>
+                <li><a href="./manager/">Керівник</a></li>
+                <li><a href="./counter/">Бухгалтер</a></li>
+            </ul>
+        </nav>
+    </main>
+    <footer>
+        <p>© 2023 CRM Система. Усі права захищено.</p>
+    </footer>
+{% endblock %}

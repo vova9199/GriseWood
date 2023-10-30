@@ -1,0 +1,10 @@
+{% extends 'base.html' %}  <!-- Replace 'base.html' with your base template -->
+
+{% block content %}
+  <h2>Edit Raw Material Batch</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+{% endblock %}
