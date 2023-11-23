@@ -1,0 +1,13 @@
+{% if widget.is_initial %}
+  <p class="file-upload">
+    {{ widget.input }}
+    <a href="{{ widget.value.url }}" target="_blank" class="btn btn-secondary" role="button">Current File</a>
+    <label for="{{ widget.id_for_label }}">Change:</label>
+    {{ widget.clear_checkbox }} Clear
+  </p>
+{% else %}
+  <p class="file-upload">
+    {{ widget.input }}
+    <label for="{{ widget.id_for_label }}">Upload a file:</label>
+  </p>
+{% endif %}

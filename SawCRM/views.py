@@ -14,10 +14,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 # from .models import ClientContact, RawMaterial, CuttingRecord, Sawdust, Pallets, Graft
 from django.template.defaultfilters import floatformat
 from django.urls import reverse_lazy, reverse
+from django.views import View
 from django.views.generic import UpdateView, DeleteView, DetailView
 
 from .models import RawMaterial, CuttingRecord, Sawdust, WoodChip, Pallet, WoodType, RawMaterialBatch, Frame, Order, \
-    Board
+    Board, ReceiptPhoto
 
 
 def index(request):
@@ -44,11 +45,6 @@ def logout_user(request):
     messages.success(request, "You Have Been Logged Out...")
     return redirect('home')
 
-def view_batch_photo(request, pk):
-    obj = get_object_or_404(RawMaterialBatch, pk=pk)  # Замініть YourModel на вашу модель
-    image_path = obj.receipt_photo.url
-    image_url = request.build_absolute_uri(image_path)
-    return HttpResponse(f'<img src="{image_url}">')
 
 
 # ------------------------------------------- Director ------------------------------------------------
@@ -89,6 +85,88 @@ def get_color_styles(total_quantity, total_volume, batch):
     return total_quantity_style, total_volume_style
 
 
+# def rawmaterialbatch_detail(request, pk):
+#     raw_material_batch = get_object_or_404(RawMaterialBatch, pk=pk)
+#
+#     if request.method == 'POST':
+#         # Логіка для завантаження фото
+#         form = ReceiptPhotoForm(request.POST, request.FILES, instance=raw_material_batch)
+#         if form.is_valid():
+#             form.save()
+#     else:
+#         form = ReceiptPhotoForm(instance=raw_material_batch)
+#
+#     return render(request, 'your_template.html', {'raw_material_batch': raw_material_batch, 'form': form})
+# def add_receipt_photo(request, batch_id):
+#
+#     if request.method == 'POST':
+#         batch = get_object_or_404(RawMaterialBatch, id=batch_id)
+#         form = ReceiptPhotoForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             photo = form.save(commit=False)
+#             photo.batch = batch
+#             photo.save()
+#             return redirect('edit_delete_batch', pk=batch_id)
+#     else:
+#         form = ReceiptPhotoForm()
+#
+#     return render(request, 'raw_material_batch/add_receipt_photo.html', {'form': form, 'batch_id': batch_id})
+#
+#
+# def delete_receipt_photo(request, batch_id, photo_id):
+#     batch = get_object_or_404(RawMaterialBatch, id=batch_id)
+#     photo = get_object_or_404(ReceiptPhoto, id=photo_id, batch=batch)
+#
+#     if request.method == 'POST':
+#         photo.image.delete()
+#         photo.delete()
+#         return redirect('edit_delete_batch', pk=batch_id)
+#
+#     return render(request, 'raw_material_batch/delete_receipt_photo.html', {'batch': batch, 'photo': photo})
+
+from django.http import JsonResponse
+
+def simple_view_photo(request):
+    pass
+
+class BatchPhotoView(View):
+    template_name = 'raw_material_batch/view_batch_photos.html'
+
+    def get(self, request, *args, **kwargs):
+        batch_id = kwargs.get('batch_id')
+        batch = RawMaterialBatch.objects.get(id=batch_id)
+        photos = ReceiptPhoto.objects.filter(batch__id=batch_id)
+        form_photo = ReceiptPhotoForm()
+        context = {'batch': batch, 'photos': photos, 'form_photo': form_photo}
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        batch_id = kwargs.get('batch_id')
+        form = ReceiptPhotoForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            batch_photo = form.save(commit=False)
+            batch_photo.batch_id = batch_id
+            batch_photo.save()
+            messages.success(request, 'Фото успішно додано.')
+        else:
+            messages.error(request, 'Помилка при додаванні фото.')
+
+        return redirect('view_batch_photos', batch_id=batch_id)
+
+
+class PhotoDeleteView(View):
+    def post(self, request, *args, **kwargs):
+        photo_id = kwargs.get('photo_id')
+        try:
+            photo = ReceiptPhoto.objects.get(id=photo_id)
+            photo.delete_photo()
+            messages.success(request, 'Фото успішно видалено.')
+        except ReceiptPhoto.DoesNotExist:
+            messages.error(request, 'Помилка при видаленні фото.')
+
+        return redirect(photo.get_absolute_url())
+
 @login_required
 # @user_passes_test(lambda user: user.groups.filter(name='Engineer').exists())
 def raw_material_batch_list(request):
@@ -103,7 +181,7 @@ def raw_material_batch_list(request):
     total_batches = batches.count() if batches else 0
     total_batch_quantity = batches.aggregate(Sum('quantity'))['quantity__sum'] if batches else 0
     total_batches_volume = batches.aggregate(Sum('volume'))['volume__sum'] if batches else 0
-    total_raw_material_volume = sum(batch.get_total_volume() for batch in batches)
+    total_raw_material_volume = sum(batch.get_total_volume_fact() for batch in batches)
     total_batches_total_amount = batches.aggregate(Sum('total_amount'))['total_amount__sum'] if batches else 0
     # total_raw_material_volume = raw_materials.aggregate(Sum('volume'))['volume__sum'] if raw_materials else 0
     total_raw_material_quantity = raw_materials.aggregate(total_quantity=Sum('is_cut'))[
@@ -131,26 +209,40 @@ def raw_material_batch_list(request):
 def create_raw_material_batch(request):
     if request.method == 'POST':
         form = RawMaterialBatchForm(request.POST, request.FILES)
+        photo_form = ReceiptPhotoForm(request.POST, request.FILES)
+
         if 'submit_action' in request.POST:
             submit_action = request.POST['submit_action']
+
             if submit_action == 'add_without_batch':
                 return redirect('create_raw_material')
+
             elif submit_action == 'add_batch':
-                if form.is_valid():
+                if form.is_valid() and photo_form.is_valid():
                     series = form.cleaned_data['series']
                     existing_batch = RawMaterialBatch.objects.filter(series=series).first()
+
                     if existing_batch:
+                        # Якщо партія вже існує, ви можете повернутися з повідомленням
                         messages.error(request,
                                        f'Партія з серією ЮІГ №{series} вже існує! Ось детальна інформація про цю партію:')
                         return render(request, 'raw_material_batch/create_raw_material_batch.html',
                                       {'form': form, 'existing_batch': existing_batch})
                     else:
+                        # Збереження Batch
                         batch = form.save()
+
+                        # Додавання фото до Batch
+                        photo = photo_form.save(commit=False)
+                        photo.save()
+                        batch.receipt_photos.add(photo)
+
                         return redirect('create_raw_material', pk=batch.pk)
     else:
         form = RawMaterialBatchForm()
+        photo_form = ReceiptPhotoForm()
 
-    context = {'form': form}
+    context = {'form': form, 'photo_form': photo_form}
     return render(request, 'raw_material_batch/create_raw_material_batch.html', context)
 
 
@@ -181,24 +273,22 @@ class RawMaterialBatchDetailView(DetailView):
         else:
             context['total_volume_style'] = 'color: red;'
 
+        context['photos'] = self.object.get_all_photos()
+        context['form_photo'] = ReceiptPhotoForm()
+
         return context
 
-    def post(self, request, pk):
+    def post(self, request, *args, **kwargs):
         batch = self.get_object()
-        update_form = RawMaterialBatchForm(request.POST, request.FILES, instance=batch)
-        if 'delete_photo' in request.POST:
-            if batch.receipt_photo:
-                batch.receipt_photo.delete()
-            return redirect('edit_raw_material_batch', pk=pk)
-        if 'action' in request.POST:
-            action = request.POST['action']
-            if action == 'update' and update_form.is_valid():
-                update_form.save()
-            elif action == 'delete':
-                batch.delete()
-                return HttpResponseRedirect(reverse('inventory'))  # Redirect to the raw_material_batch_list page
-        return render(request, 'raw_material_batch/edit_delete_batch.html', {'object': batch, 'update_form': update_form})
+        form = ReceiptPhotoForm(request.POST, request.FILES)
 
+        if form.is_valid():
+            batch.add_photo(form.cleaned_data['image'])
+            messages.success(request, 'Фото успішно додано.')
+        else:
+            messages.error(request, 'Помилка при додаванні фото.')
+
+        return redirect('view_batch_photos', pk=batch.pk)
 
 
 def raw_material_batch_delete(request, pk):
@@ -587,7 +677,7 @@ def delete_order(request, pk):
 # ------------------------------------------- Manager ------------------------------------------------
 from django.shortcuts import render, redirect
 from .forms import ClientContactForm, RawMaterialForm, CuttingRecordForm, WoodTypeForm, RawMaterialBatchForm, FrameForm, \
-    OrderForm, BoardCreationForm, BoardEditForm
+    OrderForm, BoardCreationForm, BoardEditForm, ReceiptPhotoForm
 from .models import ClientContact, CuttingRecord
 
 
@@ -659,3 +749,5 @@ def accounting(request):
 
 def salary_list(request):
     return None
+
+

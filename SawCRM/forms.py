@@ -1,7 +1,8 @@
 from datetime import date
 
 from django import forms
-from .models import Sawdust, CuttingRecord, WoodType, RawMaterial, ClientContact, WoodChip, RawMaterialBatch, Frame, Board
+from .models import Sawdust, CuttingRecord, WoodType, RawMaterial, ClientContact, WoodChip, RawMaterialBatch, Frame, \
+    Board, ReceiptPhoto
 from .models import Staff, Order
 from .widgets import DateInput
 
@@ -12,22 +13,31 @@ class Staff(forms.ModelForm):
         fields = '__all__'
 
 
-class RawMaterialBatchForm(forms.ModelForm):
-    # delivery_date = forms.DateField(
-    #     input_formats=['%d.%m.%Y'],
-    #     widget=forms.DateInput(format='%d.%m.%Y', attrs={'placeholder': 'дд.мм.рррр'}),
-    # )
+class ReceiptPhotoForm(forms.ModelForm):
+    image = forms.ImageField(
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-control"
+            }
+        )
+    )
+    class Meta:
+        model = ReceiptPhoto
+        fields = ['image']
 
-    def clean_date(self):
+
+class RawMaterialBatchForm(forms.ModelForm):
+
+    def clean_delivery_date(self):
         delivery_date = self.cleaned_data['delivery_date']
-        return delivery_date.strftime('%Y-%m-%d')  # Конвертація до формату YYYY-MM-DD
+        return delivery_date.strftime('%Y-%m-%d')  # Convert to the format YYYY-MM-DD
 
     class Meta:
         model = RawMaterialBatch
         fields = ['sender', 'series', 'delivery_date', 'loading_point', 'quantity', 'volume', 'total_amount',
-                  'not_declared', 'note', 'receipt_photo']
+                  'not_declared', 'note']
         widgets = {
-            'delivery_date': DateInput,  # Використовуємо DatePickerInput для поля 'delivery_day'
+            'delivery_date': DateInput,  # Using DatePickerInput for the 'delivery_day' field
         }
 
 
@@ -61,6 +71,7 @@ class FrameForm(forms.ModelForm):
     class Meta:
         model = Frame
         fields = '__all__'
+
 
 class CuttingRecordForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

@@ -1,0 +1,34 @@
+<!-- templates/raw_material_batch/view_batch_photos.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Фотографії партії №{{ batch.series }}</h2>
+
+{% if photos %}
+    <ul>
+      {% for photo in photos %}
+        <li>
+          <a href="{{ photo.image.url }}" target="_blank">
+            <img src="{{ photo.image.url }}" alt="{{ photo.image.name }}" style="max-width: 200px; max-height: 200px;">
+          </a>
+          <br>
+          <form method="post" action="{% url 'delete_receipt_photo' batch_id=batch.id photo_id=photo.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Видалити фото</button>
+          </form>
+        </li>
+         <br>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <!-- Додати нове фото -->
+  <h3>Додати нове фото</h3>
+  <form method="post" enctype="multipart/form-data" action="{% url 'view_batch_photos' batch_id=batch.id %}">
+    {% csrf_token %}
+    {{ form_photo }}
+    <button class="btn btn-outline-success" type="submit">Додати</button>
+  </form>
+
+{% endblock %}

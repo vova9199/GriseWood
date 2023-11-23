@@ -123,14 +123,16 @@
             <th>Вантажовідправник</th>
             <th>Пункт завантаження</th>
             <th>К-сть в партії</th>
+            <th>Фактична к-сть</th>
             <th>Об'єм, м³</th>
             <th>Фактичний об'єм, м³</th> <!-- Доданий стовпчик -->
             <th>Загальна вартість</th>
+            <th>Ціна 1 м³</th>
             <th>Примітка</th>
             <th class="additional-details-row">L, м</th>
             <th class="additional-details-row">D, см</th>
             <th class="additional-details-row">V, м³</th>
-            <th class="additional-details-row">Q, шт.</th>
+{#            <th class="additional-details-row">Q, шт.</th>#}
             <th class="additional-details-row">Тип</th>
         </tr>
     </thead>
@@ -143,16 +145,19 @@
                         <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.delivery_date|date:"d.m.Y" }}</td>
                         <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.sender }}</td>
                         <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.loading_point }}</td>
-                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.quantity }} шт.</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.quantity|default:'0' }} шт.</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.get_total_quantity_fact|default:'0' }} шт.</td>
                         <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.volume|floatformat:".1f" }} м³</td>
-                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.get_total_volume|floatformat:"-3" }} м³</td> <!-- Виклик методу для обчислення фактичного об'єму -->
-                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.total_amount|floatformat }} грн</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.get_total_volume_fact|floatformat:"-3" }} м³</td> <!-- Виклик методу для обчислення фактичного об'єму -->
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.total_amount|floatformat:'-2' }} грн</td>
+                        <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.get_price_per_cubic_meter|floatformat:'-2' }} грн</td>
+
                         <td rowspan="{{ batch.rawmaterial_set.count }}">{{ batch.note|default:"—" }}</td>
                     {% endif %}
-                    <td class="additional-details-row">{{ raw_material.length|floatformat:'-1' }}</td>
-                    <td class="additional-details-row">{{ raw_material.diameter|floatformat:'-1' }}</td>
+                    <td class="additional-details-row">{{ raw_material.length|floatformat:'-2' }}</td>
+                    <td class="additional-details-row">{{ raw_material.diameter|floatformat:'-2' }}</td>
                     <td class="additional-details-row">{{ raw_material.volume }}</td>
-                    <td class="additional-details-row">{{ raw_material.quantity }}</td>
+{#                    <td class="additional-details-row">{{ raw_material.quantity }}</td>#}
                     <td class="additional-details-row">{{ raw_material.wood_type }}</td>
                     <td class="additional-details-row">
                         <a class="btn btn-info" href="{% url 'edit_raw_material' pk=raw_material.id %}">Редагувати</a>
@@ -166,16 +171,20 @@
                     <td>{{ batch.delivery_date|date:"d.m.Y" }}</td>
                     <td>{{ batch.sender }}</td>
                     <td>{{ batch.loading_point }}</td>
-                    <td>{{ batch.quantity }}</td>
-                    <td>{{ batch.volume|stringformat:".1f" }}</td>
-                    <td>{{ batch.get_total_volume }}</td> <!-- Виклик методу для обчислення фактичного об'єму -->
-                    <td>{{ batch.total_amount|floatformat }}</td>
+                    <td>{{ batch.quantity }} шт.</td>
+                    <td>{{ batch.get_total_quantity_fact }} шт.</td> <!-- Виклик методу для обчислення фактичного об'єму -->
+                    <td>{{ batch.volume|stringformat:"-2" }} м³</td>
+                    <td>{{ batch.get_total_volume_fact|floatformat:'-2' }} м³</td> <!-- Виклик методу для обчислення фактичного об'єму -->
+                    <td>{{ batch.total_amount|floatformat:'-2' }} грн</td>
+                    <td>{{ batch.get_price_per_cubic_meter|floatformat:'-2' }} грн</td>
                     <td>{{ batch.note|default:"—" }}</td>
                     <td class="additional-details-row"></td>
                     <td class="additional-details-row"></td>
                     <td class="additional-details-row"></td>
                     <td class="additional-details-row"></td>
                     <td class="additional-details-row">&nbsp;</td>
+
+
                 </tr>
             {% endif %}
         {% endfor %}

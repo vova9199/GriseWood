@@ -30,13 +30,18 @@
     <li><strong>Об'єм:</strong> {{ object.volume }} м³ | <span style="{{ total_volume_style }}">Об'єм по факту: {{ total_vol|floatformat:'-3' }} м³</span></li>
     <li><strong>Загальна сума:</strong> {{ object.total_amount }} грн</li>
     <li><strong>Примітка:</strong> {{ object.note|default:'-' }}</li>
-      {% if object.receipt_photo %}
-      <li><strong>Фото:</strong>
-          <img src="{{ batch.receipt_photo.url }}" alt="Фото квитанції" width="200">
-            <button class="btn btn-outline-info" id="viewPhotoButton">Переглянути фото</button>
-        {% else %}
-          <li><strong>Фото:</strong> відсутнє!
-      {% endif %}
+{% if object.receipt_photos.all %}
+    <li><strong>Фото квитанції:</strong></li>
+    <ul>
+        <!-- Provide a link to view_batch_photos if photos exist -->
+        <p><a class="btn btn-outline-secondary" href="{% url 'view_batch_photos' batch_id=object.id %}">Переглянути фото</a></p>
+    </ul>
+{% else %}
+    <!-- If no photos, provide a link to view_batch_photos with a label to add photos -->
+    <p><a class="btn btn-success" href="{% url 'view_batch_photos' batch_id=object.id %}">Додати фото</a></p>
+{% endif %}
+
+<br>
   </ul>
 </div>
     <div>
@@ -54,7 +59,7 @@
     <!-- Відображення total_quantity та total_vol з відповідними стилями -->
     <p><strong>Загальна к-сть дерева:</strong> {{ object.quantity }} шт. | <span style="{{ total_quantity_style }}">Додано {{ total_quantity }} шт.</span></p>
     <p><strong>Об'єм:</strong> {{ object.volume }} м³ | <span style="{{ total_volume_style }}">Об'єм по факту: {{ total_vol|floatformat:'-3' }} м³</span></p>
-    <a href="{% url 'create_raw_material' pk=object.pk %}">Додати записи</a></a>
+    <a class="btn btn-success" href="{% url 'create_raw_material' pk=object.pk %}">Додати записи сировини</a></a>
   <table>
     <thead>
       <tr>

@@ -1,0 +1,12 @@
+<!-- delete_receipt_photo.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Delete Receipt Photo</h1>
+  <p>Are you sure you want to delete the photo "{{ photo.image.name }}"?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+  </form>
+  <a href="{% url 'edit_delete_batch' pk=raw_material_batch.pk %}">Cancel</a>
+{% endblock %}

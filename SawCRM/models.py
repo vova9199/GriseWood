@@ -1,6 +1,7 @@
 import csv
 import os
 import shutil
+import uuid
 from datetime import datetime, date
 
 from django.contrib.auth.models import AbstractUser
@@ -8,7 +9,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.models import User
-from django.db.models import F
+from django.db.models import F, Sum
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.db import models
@@ -117,37 +119,35 @@ class WoodType(models.Model):
         return f'{self.name}'
 
 
-def batch_upload_to(instance, filename):
-    # Отримуємо значення поля 'delivery_date' та 'series' для поточного екземпляру
-    delivery_date = instance.delivery_date.strftime('%Y-%m-%d')
-    series = instance.series
-    # Отримуємо розширення файлу (наприклад, '.jpg')
-    ext = filename.split('.')[-1]
-    # Формуємо нове ім'я файлу в форматі 'Дата_Серія.розширення'
-    new_filename = f"{delivery_date}_{series}.{ext}"
-    # Повертаємо шлях для збереження файлу
-    return os.path.join('BatchPhoto', new_filename)
-
 class RawMaterialBatch(models.Model):
     sender = models.CharField(max_length=300, verbose_name='Вантажовідправник')
     series = models.CharField(max_length=50, verbose_name='Серія ЮІГ')
     delivery_date = models.DateField(verbose_name='Дата', default=date.today)
     created = models.DateField(auto_now=False, auto_now_add=True, verbose_name='Дата створення запису')
     loading_point = models.CharField(max_length=100, verbose_name='Пункт завантаження')
-    quantity = models.IntegerField(verbose_name='Кількість дерева', help_text='шт. в партії')
+    quantity = models.IntegerField(verbose_name='Кількість дерева', help_text='шт. в партії', default=0)
     volume = models.FloatField(verbose_name='Об\'єм по ТТН', help_text='(м³)')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Загальна сума', help_text='(грн)')
     not_declared = models.BooleanField(default=False, verbose_name='Не декларувати')
     note = models.TextField(null=True, blank=True, verbose_name='Примітка')
-    receipt_photo = models.ImageField(upload_to=batch_upload_to, null=True, blank=True, verbose_name='Фото квитанції')
 
-    # def get_total_volume(self):
+    # receipt_photo = models.ImageField(upload_to=batch_upload_to, null=True, blank=True, verbose_name='Фото квитанції')
+    # receipt_photos = models.ManyToManyField(ReceiptPhoto, blank=True, related_name='batch_photos')
+    # def get_total_volume_fact(self):
     #     # Отримати суму об'ємів усіх сировинних матеріалів, які належать даній партії
     #     total_volume = self.rawmaterial_set.aggregate(Sum('volume'))['volume__sum']
     #     return total_volume if total_volume is not None else 0.0
 
-    def get_total_volume(self):
+    def get_total_volume_fact(self):
         return sum(raw_material.volume for raw_material in self.rawmaterial_set.all())
+
+    def get_total_quantity_fact(self):
+        # сума всіх записів RawMaterial для даної партії
+        return self.rawmaterial_set.all().count() or 0
+
+    def get_price_per_cubic_meter(self):
+        # обрахунок ціни за 1 м³ (власний розрахунок, який потрібно додати)
+        return float(self.total_amount) / float(self.volume) if self.volume else 0
 
     def __str__(self):
         formatted_date = self.delivery_date.strftime('%d.%m.%Y')
@@ -155,21 +155,58 @@ class RawMaterialBatch(models.Model):
         return f'№{self.series} - {formatted_date} - {self.loading_point} - {self.quantity} шт. - {self.volume} м³ - {self.total_amount} грн - Примітка: {self.note} | {if_declared}'
         # return f'{self.series}'
 
-    def get_receipt_photo(self):
-        return self.receipt_photo
+    def add_photo(self, photo):
+        receipt_photo = ReceiptPhoto.objects.create(batch=self, image=photo)
+        return receipt_photo
 
-    # def save(self, *args, **kwargs):
-    #     # Збереження фото
-    #     if self.receipt_photo:
-    #         destination = os.path.join('media', 'receipts', f'{self.series}_{self.delivery_date}.jpg')
-    #         shutil.move(self.receipt_photo.path, destination)  # Переміщуємо файл
-    #         self.receipt_photo = destination  # Зберігаємо новий шлях до файлу
-    #     super(RawMaterialBatch, self).save(*args, **kwargs)
+    def delete_photo(self, photo_id):
+        photo = ReceiptPhoto.objects.get(id=photo_id)
+        if photo:
+            photo.image.delete()
+            photo.delete()
+
+    def get_all_photos(self):
+        return self.receipt_photos.all()
 
     class Meta:
         ordering = ['-created', 'volume', 'total_amount']
 
-#TODO: is_cut
+
+def batch_upload_to(instance, filename):
+    # Отримуємо значення поля 'delivery_date' та 'series' для поточного екземпляру
+    batch_id = instance.batch.id
+    series = instance.batch.series
+    # Генеруємо унікальний ідентифікатор (uuid)
+    # unique_id = str(uuid.uuid4().hex)
+    # new_filename = f"{batch_id}_{series}_{unique_id}.{filename.split('.')[-1]}"
+
+
+    new_filename = f"{batch_id}_{series}.{filename.split('.')[-1]}"
+
+    # Повертаємо шлях для збереження файлу
+    return os.path.join('BatchPhotos', new_filename)
+
+
+class ReceiptPhoto(models.Model):
+    image = models.ImageField(upload_to=batch_upload_to, null=True, blank=True, help_text="Завантажте зображення")
+    batch = models.ForeignKey(RawMaterialBatch, on_delete=models.CASCADE, related_name='receipt_photos')
+
+    @property
+    def image_url(self):
+        if self.image and hasattr(self.image, 'url'):
+            return self.image.url
+
+    def delete_photo(self):
+        # Метод для видалення фото
+        self.image.delete()
+        self.delete()
+
+    def get_absolute_url(self):
+        # URL для повернення після видалення
+        return reverse('view_batch_photos', kwargs={'batch_id': self.batch_id})
+
+
+# TODO: is_cut
 class RawMaterial(models.Model):
     # order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False, null=True, verbose_name='Замовлення')
     batch = models.ForeignKey(RawMaterialBatch, on_delete=models.CASCADE, verbose_name='Партія', blank=True, null=True,
@@ -283,7 +320,8 @@ class Board(models.Model):
     def __str__(self):
         return f'{self.length}m x {self.width}mm x {self.height}mm - {self.quantity} шт. ({self.wood_type})'
 
-#TODO: можливо видалити цю модель, бо
+
+# TODO: можливо видалити цю модель, бо
 class CuttingRecord(models.Model):
     # order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=True, null=True,
     #                           verbose_name='Замовлення', help_text='(не обов\'язково)')

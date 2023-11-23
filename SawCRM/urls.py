@@ -3,6 +3,7 @@ from django.urls import path
 
 from GriseWood import settings
 from SawCRM import views
+from SawCRM.views import RawMaterialBatchDetailView, BatchPhotoView, PhotoDeleteView
 
 urlpatterns = [
 
@@ -15,20 +16,27 @@ urlpatterns = [
     path('logout/', views.logout_user, name='logout'),
 
 
-    path('media/photos/<int:pk>/', views.view_batch_photo, name='view_batch_photo'),
+    # path('media/photos/<int:pk>/', views.view_batch_photo, name='view_batch_photo'),
     path('raw_material_batch_list/', views.raw_material_batch_list, name='raw_material_batch_list'),
     path('raw_material_batch/create/', views.create_raw_material_batch, name='create_raw_material_batch'),
     path('raw_material_batch/edit/<int:pk>/', views.RawMaterialBatchDetailView.as_view(), name='edit_delete_batch'),
     path('raw_material_batch/delete/<int:pk>/', views.raw_material_batch_delete, name='delete_raw_material_batch'),
     # path('raw_material_batch/delete/<int:pk>', views.RawMaterialBatchDeleteView.as_view(), name='delete_raw_material_batch'),
-
+    # path('raw_material_batch/batch_photo/<int:pk>/', views.view_batch_photo, name='view_batch_photo'),
+    # path('rawmaterialbatch/<int:pk>/add_receipt_photo/', views.add_receipt_photo, name='add_receipt_photo'),
+    # path('rawmaterialbatch/<int:pk>/delete_receipt_photo/', views.delete_receipt_photo, name='delete_receipt_photo'),
     # path('raw_material/create/without_series/', views.create_raw_material, name='create_raw_material'),
     path('raw_material/create/<int:pk>/', views.create_raw_material, name='create_raw_material'),
     # path('raw_material_batch/create/', views.create_raw_material_batch, name='create_raw_material_batch'),
     # path('raw_material/batch/<int:batch_id>/', views.create_raw_material_with_batch, name='create_raw_material_with_batch'),
     # path('raw_material/create/', views.create_raw_material, name='create_raw_material'),
     # path('raw_material/create/<int:series>/', views.create_raw_material, name='create_raw_material_with_batch'),
-
+    # path('raw_material_batch/<int:pk>/view_batch_photos/', RawMaterialBatchDetailView.as_view(), name='view_batch_photos'),
+    # path('raw_material_batch/<int:batch_id>/add_receipt_photo/', views.add_receipt_photo, name='add_receipt_photo'),
+    # path('raw_material_batch/<int:batch_id>/delete_receipt_photo/<int:photo_id>/', views.delete_receipt_photo, name='delete_receipt_photo'),
+    path('raw_material_batch/<int:batch_id>/view_batch_photos/', BatchPhotoView.as_view(), name='view_batch_photos'),
+    path('raw_material_batch/<int:batch_id>/delete_receipt_photo/<int:photo_id>/', PhotoDeleteView.as_view(),
+         name='delete_receipt_photo'),
 
     path('frames/', views.frames_list, name='frames_list'),
     path('frames/create/', views.create_frame, name='create_frame'),
@@ -59,7 +67,3 @@ urlpatterns = [
 
 ]
 
-
-# Додати це в кінець файлу для роботи з медіафайлами
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

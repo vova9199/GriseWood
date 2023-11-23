@@ -1,0 +1,12 @@
+<!-- add_receipt_photo.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Add Receipt Photo</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload Photo</button>
+  </form>
+  <a href="{% url 'edit_delete_batch' pk=batch_id %}">Back to Batch Detail</a>
+{% endblock %}
