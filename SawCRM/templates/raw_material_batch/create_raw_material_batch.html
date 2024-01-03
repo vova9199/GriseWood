@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 
+
 {% block content %}
   <div>
     <h2>Create Raw Material Batch</h2>
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" autocomplete="on">
       {% csrf_token %}
       {{ form.as_p }}
         {{ photo_form.as_p }}

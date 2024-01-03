@@ -28,6 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,19 +39,31 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'bootstrap_datepicker_plus',
-    'SawCRM',
     'crispy_forms',
+    'crispy_bootstrap5',
+    'bootstrap_datepicker_plus',
+    'authentication',
+    'SawCRM',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+AUTH_USER_MODEL = 'authentication.CustomUser'
+AUTHENTICATION_BACKENDS = ['authentication.models.CustomAuthBackend']
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'GriseWood.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'GriseWood.urls'
@@ -125,7 +138,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / 'static'
+                     ]
+
+# # # Add the following line
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -138,4 +157,7 @@ DATE_INPUT_FORMATS = ('%d.%m.%Y')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+LOGIN_URL = 'login'  # URL where users are redirected if they are not logged in
+LOGIN_REDIRECT_URL = 'home'  # URL where users are redirected after login
+

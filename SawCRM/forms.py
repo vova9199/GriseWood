@@ -1,20 +1,18 @@
 from datetime import date
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
+
+from authentication.models import CustomUser
 from .models import Sawdust, CuttingRecord, WoodType, RawMaterial, ClientContact, WoodChip, RawMaterialBatch, Frame, \
-    Board, ReceiptPhoto
-from .models import Staff, Order
+    Board, ReceiptPhoto, CompletedAct
+from .models import Order
 from .widgets import DateInput
 
 
-class Staff(forms.ModelForm):
-    class Meta:
-        model = Staff
-        fields = '__all__'
-
-
 class ReceiptPhotoForm(forms.ModelForm):
-    image = forms.ImageField(
+    image = forms.ImageField(required=False,
         widget=forms.ClearableFileInput(
             attrs={
                 "class": "form-control"
@@ -183,3 +181,20 @@ class ClientContactForm(forms.ModelForm):
     class Meta:
         model = ClientContact
         fields = "__all__"
+
+
+# ----------------------------------------------------------------- CompletedActs
+class CompletedActForm(forms.ModelForm):
+    class Meta:
+        model = CompletedAct
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Save'))
+
+        # Додайте віджет для вибору дати до полі transport_date
+        self.fields['transport_date'].widget = forms.DateInput(attrs={'type': 'date'})
+        self.fields['driver'].queryset = CustomUser.objects.filter(role="DRIVER")

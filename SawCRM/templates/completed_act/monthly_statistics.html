@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} Статистика актів {% endblock %}
+
+{% block content %}
+    <h1>Monthly Statistics</h1>
+
+    {% if monthly_statistics %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Distance</th>
+                    <th>Total Volume</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in monthly_statistics %}
+                    <tr>
+                        <td>{{ stat.month|date:"F Y" }}</td>
+                        <td>{{ stat.total_distance }}</td>
+                        <td>{{ stat.total_volume }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No statistics available.</p>
+    {% endif %}
+{% endblock %}

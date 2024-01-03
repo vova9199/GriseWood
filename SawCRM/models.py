@@ -3,63 +3,27 @@ import os
 import shutil
 import uuid
 from datetime import datetime, date
+from django.conf import settings
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.models import User
 from django.db.models import F, Sum
+from django.db.models.functions import TruncMonth
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+
 from django.db import models
+from authentication.models import CustomUser
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
-
-class Staff(AbstractUser):
-    DIRECTOR = 'DIRECTOR'
-    ENGINEER = 'ENGINEER'
-    MANAGER = 'MANAGER'
-    COUNTER = 'COUNTER'
-    EMPLOYEE = 'EMPLOYEE'
-
-    POSITION_CHOICES = [
-        (DIRECTOR, 'Директор'),
-        (ENGINEER, 'Інженер'),
-        (MANAGER, 'Менеджер'),
-        (COUNTER, 'Бухгалтер'),
-        (EMPLOYEE, 'Працівник')
-    ]
-    phone = models.CharField(max_length=15)
-    position = models.CharField(max_length=10, choices=POSITION_CHOICES)
-
-    def __str__(self):
-        return self.username
-
-    groups = models.ManyToManyField(
-        'auth.Group',
-        verbose_name='Групи',
-        blank=True,
-        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
-        related_name='staff_set',
-        related_query_name='staff',
-    )
-
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        verbose_name='Права доступу',
-        blank=True,
-        help_text='Specific permissions for this user.',
-        related_name='staff_set',
-        related_query_name='staff',
-    )
-
-
-class WorkingHours(models.Model):
-    employee = models.ForeignKey(Staff, on_delete=models.CASCADE, verbose_name='Працівник')
-    hours = models.IntegerField(verbose_name='Години')
-    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Ставка')
-    created = models.DateField(auto_now=True, verbose_name='Дата створення/оновлення')
+# class WorkingHours(models.Model):
+#     employee = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='Працівник')
+#     hours = models.IntegerField(verbose_name='Години')
+#     hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Ставка')
+#     created = models.DateField(auto_now=True, verbose_name='Дата створення/оновлення')
 
 
 class Expense(models.Model):
@@ -180,7 +144,6 @@ def batch_upload_to(instance, filename):
     # unique_id = str(uuid.uuid4().hex)
     # new_filename = f"{batch_id}_{series}_{unique_id}.{filename.split('.')[-1]}"
 
-
     new_filename = f"{batch_id}_{series}.{filename.split('.')[-1]}"
 
     # Повертаємо шлях для збереження файлу
@@ -216,7 +179,8 @@ class RawMaterial(models.Model):
 
     # quantity = models.IntegerField(verbose_name='Кількість', default=1, help_text='штук такого діаметру')
     is_cut = models.BooleanField(default=False, verbose_name='Порізаний')
-    length = models.FloatField(verbose_name='Довжина', validators=[MinValueValidator(4.0), MaxValueValidator(7.0)],
+    length = models.FloatField(verbose_name='Довжина',
+                               # validators=[MinValueValidator(4.0), MaxValueValidator(7.0)],
                                help_text='(м). Від 4 до 7')
     diameter = models.FloatField(verbose_name='Діаметр', help_text='(см)')
     volume = models.FloatField(verbose_name='Об\'єм', null=True, blank=True,
@@ -407,15 +371,115 @@ class DailyBusinessReport(models.Model):
         pass
 
 
-class WorkCompletionCertificate(models.Model):
-    # Додайте поля для актів виконаних робіт
+from django.db import models
+from django.contrib.auth.models import User
 
-    pass
+class CompletedActManager(models.Manager):
+    def get_monthly_statistics(self):
+        monthly_stats = (
+            self
+            .annotate(month=TruncMonth('transport_date', field_name='month', output_field=models.DateField()))
+            .values('month')
+            .annotate(total_distance=Sum('distance'))
+            .annotate(total_volume=Sum('volume'))
+            .order_by('-month')
+        )
 
+        return monthly_stats
+
+class CompletedAct(models.Model):
+    transport_date = models.DateField(
+        verbose_name='Дата перевезення',
+        help_text='Дата, коли була виконано перевезення.',
+        blank=True,
+        null=True
+    )
+    waybill_number = models.CharField(
+        max_length=255,
+        verbose_name='ТТН',
+        help_text='Номер транспортно-товарної накладної.',
+        blank = True,
+        null = True
+    )
+
+    driver = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        verbose_name='Водій',
+        help_text='Водій, який виконав роботу.',
+        null=True
+    )
+
+    volume = models.FloatField(
+        verbose_name='Об\'єм',
+        help_text='Об\'єм перевезення.',
+        blank=True,
+        null=True
+    )
+    distance = models.FloatField(
+        verbose_name='Дистація',
+        help_text='Кількість кілометрів, пройдених транспортом.',
+        blank=True,
+        null=True
+    )
+    loading_point = models.CharField(
+        max_length=255,
+        verbose_name='Пункт завантаження',
+        help_text='Місце, де відбулося завантаження товарів.',
+        blank=True,
+        null=True
+    )
+    delivery_point = models.CharField(
+        max_length=255,
+        verbose_name='Пункт доставки',
+        help_text='Місце, куди було доставлено вантаж.',
+        blank=True,
+        null=True
+    )
+    note = models.TextField(
+        verbose_name='Примітка',
+        help_text='Додаткова інформація чи коментарі.',
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата створення',
+        help_text='Дата і час створення запису.'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата оновлення',
+        help_text='Дата і час останнього оновлення запису.'
+    )
+
+    objects = CompletedActManager()
+
+    def __str__(self):
+        return f"Робота #{self.id}: {self.waybill_number} {self.driver.first_name} {self.driver.last_name} " \
+               f"{self.loading_point} - {self.delivery_point} ({self.distance} м) [{self.transport_date} | {self.volume} м³])"
+
+
+        # # Отримання статистики для конкретного водія
+        # driver = User.objects.get(username='your_driver_username')
+        # monthly_statistics = CompletedAct.objects.filter(driver=driver).get_monthly_statistics()
+
+    class Meta:
+        verbose_name = 'Completed Act'
+        verbose_name_plural = 'Completed Acts'
+        ordering = ['-transport_date', 'loading_point', 'delivery_point', '-created_at', 'driver']
 
 class Transfer(models.Model):
-    # Додайте поля для актів виконаних робіт
-
+    # Додайте поля для перевезень (дальнобій)
+    # driver = models.ForeignKey(
+    #     CustomUser,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name='Водій',
+    #     help_text='Водій, який виконав роботу.',
+    #     blank=True,
+    #     null=True,
+    # )
     pass
 
 
@@ -447,10 +511,12 @@ class Order(models.Model):
     # pallets = models.ForeignKey(Pallet, on_delete=models.SET_NULL, null=True, blank=True)
 
 
+
 def calculate_raw_material_volume(diameter, length):
     # Розрахунок об'єму на основі формул або таблиці
-    if diameter and length:  # перевіряємо, чи поле volume вже має значення
-        with open('SawCRM/static/csv/volumes.csv', 'r') as csvfile:
+    if diameter and length:
+        static_file_path = os.path.join(settings.BASE_DIR, 'staticfiles/csv/volumes.csv')
+        with open(static_file_path, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 d = int(row['d'])
@@ -461,9 +527,6 @@ def calculate_raw_material_volume(diameter, length):
                     return volume
 
 
-def calculate_cutting_volume(volume):
-    volume = volume * 0.5
-    pass
 
     # # Модель RawMaterial буде представляти сировину на складі
 # class RawMaterial(models.Model):

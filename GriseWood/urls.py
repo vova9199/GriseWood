@@ -20,12 +20,15 @@ from django.urls import path, include
 
 import SawCRM.views
 from GriseWood import settings
+from SawCRM.views import index as sawcrm_index  # Перейменуйте функцію для уникнення конфліктів
 
 urlpatterns = [
-    path('', SawCRM.views.index, name='index'),
-    path('SawCRM/', include('SawCRM.urls')),
+    path('', sawcrm_index, name='index'),
     path('admin/', admin.site.urls),
+    path('user/', include('authentication.urls')),
+    path('SawCRM/', include('SawCRM.urls')),
 ]
 
 if settings.DEBUG:
+    # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,92 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'home' %}">Django CRM</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        {#          <a class="nav-link" href="{% url 'add_record' %}">Add Record</a>#}
+                        {#        </li>#}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'raw_material_batch_list' %}">Прихід лісу</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'frames_list' %}">Рами</a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="framesDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Рами
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="framesDropdown">
+                            <a class="dropdown-item" href="{% url 'frames_list' %}">Список рам</a>
+                            <a class="dropdown-item" href="{% url 'create_frame' %}">Додати раму</a>
+                            <!-- Додайте інші посилання, якщо потрібно -->
+                        </div>
+                    </li>
+
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'board_list' %}">Дошки</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'order_list' %}">Замовлення</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'salary_list' %}">Години та з/п</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounting' %}">Бухгалтерія</a>
+                    </li>
+                    {% if user.role == 'DIRECTOR' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'all_users' %}">Users</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'monthly_statistics' %}">Статистика актів виконаних робіт</a>
+                    </li>
+
+                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="framesDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Акти
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="framesDropdown">
+                            <a class="dropdown-item" href="{% url 'completed_act_list' %}">Список актів</a>
+                            <a class="dropdown-item" href="{% url 'monthly_statistics' %}">Статистика актів</a>
+                            <a class="dropdown-item" href="{% url 'create_completed_act' %}">Додати акт</a>
+                            <!-- Додайте інші посилання, якщо потрібно -->
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                    {##}
+                    {#        {% else %}#}
+                    {#        <li class="nav-item">#}
+                    {#          <a class="nav-link" href="{% url 'register' %}">Register</a>#}
+                    {#        </li>#}
+                    {#        <li class="nav-item">#}
+                    {#          <a class="nav-link" href="{% url 'home' %}">Login</a>#}
+                    </li>
+                {% endif %}
+
+
+            </ul>
+
+        </div>
+    </div>
+</nav>

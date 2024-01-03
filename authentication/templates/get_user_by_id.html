@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center">User Information</h2>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th scope="row">Ім'я</th>
+                            <td>{{ obj.first_name }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">По батькові</th>
+                            <td>{{ obj.patronymic }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Прізвище</th>
+                            <td>{{ obj.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Пошта</th>
+                            <td>{{ obj.email }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Логін</th>
+                            <td>{{ obj.username }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Телефон</th>
+                            <td>{{ obj.phone }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Дата створення</th>
+                            <td>{{ obj.created_at }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Дата оновлення</th>
+                            <td>{{ obj.updated_at }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Роль</th>
+                            <td>{{ obj.get_role_name }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Is Active</th>
+                            <td>{{ obj.is_active }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Is Staff</th>
+                            <td>{{ obj.is_staff }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Is Superuser</th>
+                            <td>{{ obj.is_superuser }}</td>
+                        </tr>
+                    </table>
+                    <div class="text-center">
+                        <a class="btn btn-outline-primary mt-3" href="{% url 'all_users' %}">Back</a>
+                        <a class="btn btn-outline-info mt-3 user-link" href="{% url 'edit_user_info' obj.id %}">Edit</a>
+                        <a class="btn btn-outline-danger mt-3" href="{% url 'delete_user' obj.id %}">Delete User</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

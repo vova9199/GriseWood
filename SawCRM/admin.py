@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Staff, Order, RawMaterialBatch, RawMaterial, CuttingRecord, Frame, ReceiptPhoto
+from .models import CustomUser, Order, RawMaterialBatch, RawMaterial, CuttingRecord, Frame, ReceiptPhoto
 
-admin.site.register(Staff)
+
 admin.site.register(RawMaterialBatch)
 admin.site.register(Frame)
 admin.site.register(Order)

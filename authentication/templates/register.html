@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+    {#    <style>#}
+    {#        .center {#}
+    {#            margin: 50px auto;#}
+    {#            max-width: 400px; /* Adjust the maximum width as needed */#}
+    {#        }#}
+    {##}
+    {#        .form-group {#}
+    {#            margin-bottom: 20px;#}
+    {#        }#}
+    {##}
+    {#        .form-check-label {#}
+    {#            margin-left: 5px;#}
+    {#        }#}
+    {#    </style>#}
+
+    {#    <style>#}
+    {#    .help-text {#}
+    {#        font-size: 12px;#}
+    {#        color: #6c757d; /* Adjust the color as needed */#}
+    {#        margin-top: 5px; /* Adjust the margin-top as needed */#}
+    {#    }#}
+    {#</style>#}
+
+    <form method="POST" class="card p-4">
+        {% csrf_token %}
+        <h1 class="text-center mb-4">Реєстрація нового користувача</h1>
+
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.last_name.id_for_label }}"
+                   class="form-label">{{ form.last_name.label_tag }}</label>
+            {{ form.last_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.first_name.id_for_label }}"
+                   class="form-label">{{ form.first_name.label_tag }}</label>
+            {{ form.first_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.patronymic.id_for_label }}"
+                   class="form-label">{{ form.patronymic.label_tag }}</label>
+            {{ form.patronymic }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.phone.id_for_label }}"
+                   class="form-label">{{ form.phone.label_tag }}</label>
+            {{ form.phone }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}"
+                   class="form-label">{{ form.email.label_tag }}</label>
+            {{ form.email }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}"
+                   class="form-label">{{ form.username.label_tag }}</label>
+            {{ form.username }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.password1.id_for_label }}">Пароль:</label>
+            {{ form.password1 }}
+            <p class="help-text">{{ form.password1.help_text|safe }}</p>
+        <div class="form-check">
+            {{ form.show_password }}
+            <label class="form-check-label" for="{{ form.show_password.id_for_label }}">Показати пароль</label>
+        </div>
+        </div>
+
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.password2.id_for_label }}">Підтвердіть пароль:</label>
+            {{ form.password2 }}
+            <p class="help-text">{{ form.password2.help_text|safe }}</p>
+        </div>
+
+
+        {# Показувати тільки для авторизованих користувачів з роллю DIRECTOR #}
+        {% if request.user.is_authenticated and request.user.role == 'DIRECTOR' %}
+            <div class="form-group">
+                <label for="{{ form.role.id_for_label }}"
+                       class="form-label">{{ form.role.label_tag }}</label>
+                {{ form.role }}
+            </div>
+
+            <div class="form-group form-check">
+                {{ form.is_staff }}
+                <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">Is Staff</label>
+            </div>
+
+            <div class="form-group form-check">
+                {{ form.is_superuser }}
+                <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">Is Superuser (not
+                    recommended)</label>
+            </div>
+        {% endif %}
+        <br>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+    </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.querySelector('#id_password1');  // оновіть ідентифікатор пароля
+            const showPasswordCheckbox = document.querySelector('#id_show_password');
+
+            showPasswordCheckbox.addEventListener('change', function () {
+                passwordInput.type = this.checked ? 'text' : 'password';
+            });
+        });
+    </script>
+
+
+
+
+{% endblock %}

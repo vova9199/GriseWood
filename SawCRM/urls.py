@@ -13,7 +13,7 @@ urlpatterns = [
     # path('inzh/', views.inzh_page, name='inzh_page'),
     # path('director/', views.director_page, name='director_page'),
 
-    path('logout/', views.logout_user, name='logout'),
+    # path('logout/', views.logout_user, name='logout'),
 
 
     # path('media/photos/<int:pk>/', views.view_batch_photo, name='view_batch_photo'),
@@ -63,7 +63,17 @@ urlpatterns = [
     path('clients/', views.client_list, name='clients'),
     path('clients/create/', views.add_client, name='add_client'),
 
-    path('salary_list/', views.salary_list, name='salary_list')
+    path('salary_list/', views.salary_list, name='salary_list'),
+
+    path('completed_act_statisctics/', views.monthly_statistics, name='monthly_statistics'),
+    path('completed_act/list/', views.completedact_list, name='completed_act_list'),
+    path('completed_act/create/', views.create_completed_act, name='create_completed_act'),
+    path('completed_act/<int:pk>/edit/', views.edit_completed_act, name='edit_completed_act'),
+    path('completed_act/<int:pk>/delete/', views.delete_completed_act, name='delete_completed_act'),
+
+
+
+
 
 ]
 

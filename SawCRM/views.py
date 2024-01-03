@@ -18,33 +18,37 @@ from django.views import View
 from django.views.generic import UpdateView, DeleteView, DetailView
 
 from .models import RawMaterial, CuttingRecord, Sawdust, WoodChip, Pallet, WoodType, RawMaterialBatch, Frame, Order, \
-    Board, ReceiptPhoto
+    Board, ReceiptPhoto, CompletedAct
 
 
 def index(request):
     return redirect('home')
 
 
+# def home(request):
+#     if request.method == 'POST':
+#         username = request.POST['username']
+#         password = request.POST['password']
+#         user = authenticate(request, username=username, password=password)
+#         if user is not None:
+#             login(request, user)
+#             return redirect('home')  # Перенаправлення на головну сторінку після успішного входу
+#         else:
+#             error_message = "Неправильне ім'я користувача або пароль."
+#             return render(request, 'home.html', {'error_message': error_message})
+#     else:
+#         return render(request, 'home.html')
+
+@login_required
 def home(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('home')  # Перенаправлення на головну сторінку після успішного входу
-        else:
-            error_message = "Неправильне ім'я користувача або пароль."
-            return render(request, 'home.html', {'error_message': error_message})
-    else:
-        return render(request, 'home.html')
+    # Логіка, яку ви хочете виконати для аутентифікованого користувача
+    return render(request, 'home.html')
 
 
 def logout_user(request):
     logout(request)
     messages.success(request, "You Have Been Logged Out...")
     return redirect('home')
-
 
 
 # ------------------------------------------- Director ------------------------------------------------
@@ -126,8 +130,10 @@ def get_color_styles(total_quantity, total_volume, batch):
 
 from django.http import JsonResponse
 
+
 def simple_view_photo(request):
     pass
+
 
 class BatchPhotoView(View):
     template_name = 'raw_material_batch/view_batch_photos.html'
@@ -167,6 +173,7 @@ class PhotoDeleteView(View):
 
         return redirect(photo.get_absolute_url())
 
+
 @login_required
 # @user_passes_test(lambda user: user.groups.filter(name='Engineer').exists())
 def raw_material_batch_list(request):
@@ -193,16 +200,16 @@ def raw_material_batch_list(request):
     total_raw_material_volume = floatformat(total_raw_material_volume, 2)
 
     return render(request, 'raw_material_batch/raw_material_batch_list.html', {'batches': batches,
-                                              'raw_materials': raw_materials,
-                                              'total_batches': total_batches,
-                                              'total_batch_quantity': total_batch_quantity,
-                                              'total_batches_volume': total_batches_volume,
-                                              'total_batches_total_amount': total_batches_total_amount,
-                                              'total_raw_material_volume': total_raw_material_volume,
-                                              'total_raw_material_quantity': total_raw_material_quantity,
-                                              'cutting_records': cuttingrecords,
-                                              'sawdust': sawdust,
-                                              'woodchip': woodchip,
+                                                                               'raw_materials': raw_materials,
+                                                                               'total_batches': total_batches,
+                                                                               'total_batch_quantity': total_batch_quantity,
+                                                                               'total_batches_volume': total_batches_volume,
+                                                                               'total_batches_total_amount': total_batches_total_amount,
+                                                                               'total_raw_material_volume': total_raw_material_volume,
+                                                                               'total_raw_material_quantity': total_raw_material_quantity,
+                                                                               'cutting_records': cuttingrecords,
+                                                                               'sawdust': sawdust,
+                                                                               'woodchip': woodchip,
                                                                                'pallets': pallets})
 
 
@@ -233,9 +240,10 @@ def create_raw_material_batch(request):
                         batch = form.save()
 
                         # Додавання фото до Batch
-                        photo = photo_form.save(commit=False)
-                        photo.save()
-                        batch.receipt_photos.add(photo)
+                        if photo_form.cleaned_data['image'] is not None:
+                            photo = photo_form.save(commit=False)
+                            photo.save()
+                            batch.receipt_photos.add(photo)
 
                         return redirect('create_raw_material', pk=batch.pk)
     else:
@@ -299,7 +307,8 @@ def raw_material_batch_delete(request, pk):
         if action == 'confirm_delete':
             batch.delete()
             messages.success(request, f'Запис видалено! (Серія ЮІГ: {series})')
-            return redirect('inventory')  # Replace 'raw_material_batch_list' with the URL name of your raw_material_batch_list page
+            return redirect(
+                'raw_material_batch_list')  # Replace 'raw_material_batch_list' with the URL name of your raw_material_batch_list page
     return redirect('edit_delete_batch',
                     pk=pk)  # Replace 'edit_delete_batch' with the URL name of your RawMaterialBatchDetailView
 
@@ -335,12 +344,13 @@ def create_raw_material(request, pk=None):
                     messages.success(request, 'Запис добавлено успішно.')
                     return redirect('create_raw_material', pk=pk)
                 elif submit_action == 'save_and_exit':
-                    return redirect('inventory')
+                    return redirect('raw_material_batch_list')
     else:
         initial_data = {'batch': batch} if batch else None
         form = RawMaterialForm(initial=initial_data)
 
-    raw_materials_of_batch = RawMaterial.objects.filter(batch=batch).order_by('length', 'diameter', 'volume') if batch else []
+    raw_materials_of_batch = RawMaterial.objects.filter(batch=batch).order_by('length', 'diameter',
+                                                                              'volume') if batch else []
     total_quantity = raw_materials_of_batch.count()
     total_volume = raw_materials_of_batch.aggregate(total_volume=Sum('volume'))['total_volume']
 
@@ -357,8 +367,6 @@ def create_raw_material(request, pk=None):
     }
 
     return render(request, 'raw_material/create_raw_material.html', context)
-
-
 
 
 # def create_raw_material(request, series=None):
@@ -460,7 +468,7 @@ def create_frame(request):
     else:
         form = FrameForm()
     return render(request, 'frame/create_frame.html', {'form': form,
-                                                 'frames': frames,
+                                                       'frames': frames,
                                                        })
 
 
@@ -501,7 +509,9 @@ def create_cutting_record(request, frame_pk):
     else:
         form = CuttingRecordForm(initial={'frame': frame})  # No need to specify show_all_raw_material here
 
-    return render(request, 'cuttingrecord/create_cutting_record.html', {'form': form, 'frame': frame, 'cutting_records': cutting_records})
+    return render(request, 'cuttingrecord/create_cutting_record.html',
+                  {'form': form, 'frame': frame, 'cutting_records': cutting_records})
+
 
 def edit_delete_cutting_record(request, frame_pk, record_pk=None):
     frame = get_object_or_404(Frame, pk=frame_pk)
@@ -528,8 +538,8 @@ def edit_delete_cutting_record(request, frame_pk, record_pk=None):
 
     cutting_records = CuttingRecord.objects.filter(frame=frame)
 
-    return render(request, 'cuttingrecord/edit_delete_cutting_record.html', {'form': form, 'frame': frame, 'cutting_records': cutting_records})
-
+    return render(request, 'cuttingrecord/edit_delete_cutting_record.html',
+                  {'form': form, 'frame': frame, 'cutting_records': cutting_records})
 
 
 # ------------------------------------------- Board
@@ -538,12 +548,14 @@ def board_list(request):
     boards = Board.objects.all()
     return render(request, 'board/board_list.html', {'boards': boards})
 
+
 def create_board(request):
     if request.method == 'POST':
         form = BoardCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('board_list')  # Перенаправте користувача на сторінку зі списком дошок (змініть 'boards' на свій шлях)
+            return redirect(
+                'board_list')  # Перенаправте користувача на сторінку зі списком дошок (змініть 'boards' на свій шлях)
     else:
         form = BoardCreationForm()
 
@@ -575,12 +587,61 @@ def delete_board(request, board_id):
     return render(request, 'delete_board.html', {'board': board})
 
 
+# ------------------------------------------- CompletedAct
+
+def completedact_list(request):
+    completed_acts = CompletedAct.objects.all()
+    return render(request, 'completed_act/completedact_list.html', {'completed_acts': completed_acts})
+
+
+@login_required
+def monthly_statistics(request):
+    monthly_statistics = CompletedAct.objects.get_monthly_statistics()
+
+    return render(request, 'completed_act/monthly_statistics.html', {'monthly_statistics': monthly_statistics})
+
+
+def create_completed_act(request):
+    if request.method == 'POST':
+        form = CompletedActForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Запис створено успішно!')
+            return redirect('completed_act_list')  # Редірект на сторінку зі списком записів
+    else:
+        form = CompletedActForm()
+
+    return render(request, 'completed_act/create_completed_act.html', {'form': form})
+
+
+def edit_completed_act(request, pk):
+    completed_act = get_object_or_404(CompletedAct, pk=pk)
+
+    if request.method == 'POST':
+        form = CompletedActForm(request.POST, instance=completed_act)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Запис відредаговано успішно!')
+            return redirect('completed_act_list')  # Редірект на сторінку зі списком записів
+    else:
+        form = CompletedActForm(instance=completed_act)
+
+    return render(request, 'completed_act/edit_completed_act.html', {'form': form, 'completed_act': completed_act})
+
+
+def delete_completed_act(request, pk):
+    completed_act = get_object_or_404(CompletedAct, pk=pk)
+    completed_act.delete()
+    messages.success(request, 'Запис видалено успішно!')
+    return redirect('completed_act_list')  # Редірект на сторінку зі списком записів
+
 
 # ------------------------------------------- ORDER
 
 def order_list(request):
     orders = Order.objects.all()
     return render(request, 'order/order_list.html', {'orders': orders})
+
 
 def create_order(request):
     if request.method == 'POST':
@@ -617,8 +678,9 @@ def delete_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
     if request.method == 'POST':
         order.delete()
-        return redirect('inventory')
+        return redirect('order_list')
     return render(request, 'order/delete_order.html', {'order': order})
+
 
 # def create_cutting_record(request, frame_pk):
 #     frame = get_object_or_404(Frame, pk=frame_pk)
@@ -677,7 +739,7 @@ def delete_order(request, pk):
 # ------------------------------------------- Manager ------------------------------------------------
 from django.shortcuts import render, redirect
 from .forms import ClientContactForm, RawMaterialForm, CuttingRecordForm, WoodTypeForm, RawMaterialBatchForm, FrameForm, \
-    OrderForm, BoardCreationForm, BoardEditForm, ReceiptPhotoForm
+    OrderForm, BoardCreationForm, BoardEditForm, ReceiptPhotoForm, CompletedActForm
 from .models import ClientContact, CuttingRecord
 
 
@@ -710,6 +772,7 @@ def edit_client(request, client_id):
         form = ClientContactForm(instance=client)
 
     return render(request, 'client/edit_client.html', {'form': form, 'client_id': client_id})
+
 
 # @login_required
 # @user_passes_test(lambda u: u.position == CustomUser.BUH)
@@ -749,5 +812,3 @@ def accounting(request):
 
 def salary_list(request):
     return None
-
-

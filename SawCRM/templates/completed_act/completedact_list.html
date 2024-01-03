@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h2>Completed Acts</h2>
+
+    <p class="mt-4">Пошук: </p>
+
+    <!-- Search Bar -->
+    <div class="mb-4">
+        <input class="form-control" id="SearchInput" type="text" placeholder="Найти...">
+    </div>
+
+
+    <a class="btn btn-success" href="{% url 'create_completed_act' %}" style="margin-top: 10px; margin-bottom: 10px">Додати
+        новий акт</a>
+    <div>
+        <label>
+            <input type="checkbox" id="show-details-checkbox"> Приховати деталі актів
+        </label>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th class="searchable-column">Дата перевезення</th>
+            <th class="searchable-column">TTH</th>
+            <th class="searchable-column">Водій</th>
+            <th class="searchable-column">Об'єм</th>
+            <th class="searchable-column">Дистанція</th>
+            <th class="searchable-column">Місце загрузки</th>
+            <th class="searchable-column">Місце доставки</th>
+            <th class="searchable-column">Примітка</th>
+            <th class="additional-details-row">Дата створення</th>
+            <th class="additional-details-row">Дата оновлення</th>
+            <th>Дії</th>
+        </tr>
+        </thead>
+        <tbody id="CompletedActsTable">
+        {% for completed_act in completed_acts %}
+            <tr style="text-align: center">
+                <td class="searchable-column">{{ completed_act.transport_date|date:"d.m.Y" }}</td>
+                <td >{{ completed_act.waybill_number }}</td>
+                <td class="searchable-column">{{ completed_act.driver }}</td>
+                <td class="searchable-column">{{ completed_act.volume }}</td>
+                <td class="searchable-column">{{ completed_act.distance }}</td>
+                <td class="searchable-column">{{ completed_act.loading_point }}</td>
+                <td class="searchable-column">{{ completed_act.delivery_point }}</td>
+                <td class="searchable-column">{{ completed_act.note }}</td>
+                <td class="additional-details-row">{{ completed_act.created_at|date:"d.m.Y" }}</td>
+                <td class="additional-details-row">{{ completed_act.updated_at|date:"d.m.Y" }}</td>
+                <td>
+                    <a class="btn btn-outline-info" href="{% url 'edit_completed_act' pk=completed_act.pk %}">Edit</a>
+                    <button class="btn btn-outline-danger" onclick="confirmDelete('{{ completed_act.pk }}')">Delete
+                    </button>
+
+                </td>
+            </tr>
+
+            {% empty %}
+                <!-- Виведення повідомлення про відсутність результатів -->
+                <tr>
+                    <td colspan="11" style="text-align: center;">Немає результатів для відображення.</td>
+                </tr>
+
+
+        {% endfor %}
+
+
+        </tbody>
+    </table>
+
+
+    <!--  hide details -->
+    <script>
+        $(document).ready(function () {
+            $('#show-details-checkbox').change(function () {
+                if (this.checked) {
+                    $('.additional-details-row').hide(); // Приховати рядки з додатковими даними
+                } else {
+                    $('.additional-details-row').show(); // Показати рядки з додатковими даними
+                }
+            });
+        });
+    </script>
+
+    <!-- jQuery Script for Search Functionality -->
+    <script>
+        $(document).ready(function () {
+            $("#SearchInput").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                var $tableRows = $("#CompletedActsTable tr");
+
+                $tableRows.each(function () {
+                    var $row = $(this);
+                    var showRow = $row.find(".searchable-column").filter(function () {
+                        return $(this).text().toLowerCase().indexOf(value) > -1;
+                    }).length > 0;
+
+                    $row.toggle(showRow);
+                });
+
+                // Показати або приховати повідомлення про відсутність результатів
+                var $noResultsMessage = $("#NoResultsMessage");
+                if ($tableRows.filter(":visible").length === 0) {
+                    $noResultsMessage.show();
+                } else {
+                    $noResultsMessage.hide();
+                }
+            });
+        });
+
+    </script>
+
+
+
+    <!-- ... Comfirm Delete  ... -->
+    <script>
+        function confirmDelete(completedActId) {
+            var deleteUrl = "{% url 'delete_completed_act' pk=0 %}".replace('0', completedActId);
+
+            Swal.fire({
+                title: 'Ви впевнені?',
+                text: 'Ця дія не може бути скасована!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Так, видалити!',
+                cancelButtonText: 'Відмінити!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = deleteUrl;
+                }
+            });
+        }
+    </script>
+
+
+{% endblock %}
