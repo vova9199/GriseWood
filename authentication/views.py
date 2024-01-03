@@ -7,6 +7,7 @@ from .models import CustomUser
 from django.contrib import messages, auth
 
 
+
 # def register(request):
 #     redirect_authenticated_user = True
 #
